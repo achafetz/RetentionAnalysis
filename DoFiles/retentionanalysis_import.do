@@ -1,5 +1,4 @@
-**   Data Pack
-**   COP FY17
+**   Retention Analysis
 **   Aaron Chafetz
 **   Purpose: import data from various sources for analysis
 **   Date: January 28, 2017
