@@ -15,6 +15,13 @@
 ** IMPORT **
 ************
 
+** Crosswalk **
+	
+	import delimited "$data/District Crosswalk.csv", varnames(1) clear
+
+*save 
+	save "$data/crosswalk.dta", replace
+	
 ** ICPI Fact View **
 
 	use "$fvdata/ICPI_FactView_PSNU_20161230_v2_2.dta", clear
@@ -37,7 +44,7 @@
 ** EA Data Nav **
 
 import excel "$data/Botswana 2016 EA Data Nav Tool v01.17.17.xlsm", ///
-	sheet("Totals_MCCNav") firstrow case(lower)
+	sheet("Totals_MCCNav") firstrow case(lower) clear
 
 *keep only rentention and FBCTS data
 	keep if rptgcycle==2016 & data_type=="De-Dup"
@@ -53,8 +60,60 @@ import excel "$data/Botswana 2016 EA Data Nav Tool v01.17.17.xlsm", ///
 *save
 	save "$data/datanav_output.dta"
 
+** AIS Data **
 
+	import delimited "$data/BWA AIS relevant data.csv", clear
+
+*merge
+	rename district ais_districts
+	merge 1:m ais_districts using "$data/crosswalk.dta", keep (1 3) ///
+		nogen keepusing(district)
+	order district
 	
+*adjust percent variables to raw numbers
+	
+	foreach x in media drugs_male drugs_female drugs_bothsex condom ///
+		prevention attitude tested_pct access{
+		ds `x'*
+		foreach y in `r(varlist)'{
+			if ("`x'"=="prevention" | "`x'"=="attitude") {
+				replace `y' = (`y'/100)*total_heardofhiv
+				}
+			else if ("`x'"=="tested_pct" | "`x'"=="access") {
+				replace `y' = (`y'/100)*pop_total
+				}
+			else replace {
+				`y' = (`y'/100)*total_`x'
+				}
+			}
+		}
+		*end
+		
+	*drop percentages that can't be adjusted
+		drop incidence* prevalence*
+*collapse
+	ds, not(type string)
+	collapse (sum) `r(varlist)', by(district)
+	
+*replace original variable with percentages
+	foreach x in media drugs_male drugs_female drugs_bothsex condom ///
+		prevention attitude tested_pct access{
+		ds `x'*
+		foreach y in `r(varlist)'{
+			if ("`x'"=="prevention" | "`x'"=="attitude") {
+				replace `y' = `y'/total_heardofhiv
+				}
+			else if ("`x'"=="tested_pct" | "`x'"=="access") {
+				replace `y' = `y'/pop_total
+				}
+			else replace {
+				`y' = `y'/100/total_`x'
+				}
+			}
+		}
+		*end
+		
+		
 ***********
 ** MERGE **
 ***********
