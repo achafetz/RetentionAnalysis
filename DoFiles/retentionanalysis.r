@@ -22,7 +22,7 @@ aisdata %>%
     summarise_each(funs(toString))
 
 
-# IMPORT DATA
+# IMPORT FACT VIEW DATA
 # set the working directory(Wd), eg the file path where your data is stored --> change to folder path on your machine
 setwd("C:/Users/achafetz/Documents/ICPI/Data/")
 
@@ -49,8 +49,21 @@ bots_fvdata <- spread(bots_fvdata, numeratordenom, fy2016apr)
 
 #gen
 bots_fvdata <-mutate(bots_fvdata, ret_pct = N/D)
+bots_fvdata$ret_pct <- round(bots_fvdata$ret_pct, 3)
 
+rm(fvdata)
 
-
-
-
+# IMPORT EA DATA NAV DATA
+library(readxl)
+#set working directory
+setwd("C:/Users/achafetz/ocuments/GitHub/RetentionAnalysis/Data")
+#import EA data from Botswana data nav tool
+bots_eadata <- read_excel("Botswana 2016 EA Data Nav Tool v01.17.17.xlsm", sheet = "Totals_MCCNav")
+names(bots_eadata) <- tolower(names(bots_eadata))
+#subset
+bots_eadata <- bots_eadata %>%
+  filter(rptgcycle==2016 & data_type=="De-Dup") %>%
+  select(national_sub_unit, datim_snu_id, cbcts_lnkg_exp, cbcts_rtnadhr_exp, fbcts_loaded_tot)
+#rename
+bots_eadata <- rename(bots_eadata, psnu = national_sub_unit)
+bots_eadata <- rename(bots_eadata, psnuuid = datim_snu_id)
