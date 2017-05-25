@@ -87,6 +87,10 @@ library("readr")
   df_global <- full_join(df_mer, df_ea, by="psnuuid")
   
   
+## EXPORT ###
+  
+  write.csv(df_global, "C:/Users/achafetz/Documents/GitHub/RetentionAnalysis/Data/ret_global.csv", na="")
+  
   #compare mer/ea mismatched districts
   df_districts <- select(df_global, psnuuid, countryname, snu1, psnu, ea_districts, national_sub_sub_unit, ou)
   write.table(df_districts, "C:/Users/achafetz/Documents/GitHub/RetentionAnalysis/Documents/districts.txt", sep = "\t")
