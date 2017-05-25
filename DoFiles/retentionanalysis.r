@@ -5,7 +5,7 @@
 
 ## DEPENDENT LIBRARIES ##
 library("tidyverse")
-library(readxl)
+library("readxl")
 
 
 ## DISTRICT CROSSWALK ACROSS DATASETS ##
@@ -23,40 +23,59 @@ library(readxl)
 #rename for merge
   aisdata <- rename(aisdata, ais_districts = district)
 
-#TODO
-#convert percentages to raw numbers before aggregating up
-  for (x in c(media,drugs_male,drugs_female,drugs_bothsex,condom,prevention,attitude,tested_pct,access)) {
-    head <- colnames(select(aisdata,starts_with(i)))
-    for (y in head) {
-      if (x =="prevention" | x =="attitude") {
-        aisdata <- mutate(aisdata, y = (y/100)*total_heardofhiv)
-      }
-      else if (x =="tested_pct" | x =="access") {
-        aisdata <- mutate(aisdata, y = (y/100)*pop_total)
-      }
-      else {
-        aisdata <- mutate(aisdata, y = (y/100)*total_x)
-      }
-    }
-  }
-  
-  
-  
-  
-#merge & aggregate
   aisdata <- aisdata %>%
     left_join(crosswalk, by = "ais_districts") %>% #merge
     subset(select = -c(fv_districts, ea_districts, ais_districts)) %>% #remove unnecessary district names
-    select(district, everything()) %>% #reorder
+    select(district, everything()) #reorder
+    
+#convert percentages to raw numbers before aggregating up
+  bots_aisdata = aisdata %>% 
+    # convert everything to percents
+    mutate_each(funs(./100), drugs_male, drugs_female, drugs_bothsex, tested_pct,
+                contains('prevention'), 
+                contains('attitude'), 
+                contains('access'),
+                contains("media_"),
+                contains("condom_")) %>%
+    
+    # convert percents to raw numbers
+    mutate_each(funs(.*total_heardofhiv), contains('prevention'), contains('attitude')) %>% 
+    mutate_each(funs(.*pop_total), contains('tested_pct'), contains('access')) %>% 
+    mutate_each(funs(.*total_media), contains("media_")) %>% 
+    mutate_each(funs(drugs_male*total_drugs_male), contains("drugs_male")) %>% 
+    mutate_each(funs(drugs_female*total_drugs_female),  contains("drugs_female")) %>% 
+    mutate_each(funs(drugs_bothsex*total_drugs_bothsex), contains("drugs_bothsex")) %>% 
+    mutate_each(funs(.*total_condom), contains("condom_"))  %>% 
+    
+    # Group by your district/grouping variable
     group_by(district) %>% 
-    summarise_each(funs(sum)) #aggregate by district
-
-
+    summarise_all(funs(sum(.))) %>%
+    
+    # convert raw number to percentages
+    mutate_each(funs(./total_heardofhiv), contains('prevention'), contains('attitude')) %>% 
+    mutate_each(funs(./pop_total), contains('tested_pct'), contains('access')) %>% 
+    mutate_each(funs(./total_media), contains("media_")) %>% 
+    mutate_each(funs(drugs_male/total_drugs_male), contains("drugs_male")) %>% 
+    mutate_each(funs(drugs_female/total_drugs_female),  contains("drugs_female")) %>% 
+    mutate_each(funs(drugs_bothsex/total_drugs_bothsex), contains("drugs_bothsex")) %>% 
+    mutate_each(funs(./total_condom), contains("condom_")) %>%
+    
+    # convert from .753 to 75.3
+    mutate_each(funs(round(.*100,1)), drugs_male, drugs_female, drugs_bothsex, tested_pct,
+                contains('prevention'), 
+                contains('attitude'), 
+                contains('access'),
+                contains("media_"),
+                contains("condom_"))
+  
+    #remove original AIS dataset
+    rm(aisdata)
+  
 ## FACT VIEW DATA ##
   
 #import data and call the dataframe factviewdata
   setwd("C:/Users/achafetz/Documents/ICPI/Data/")
-  fvdata <- read.table("ICPI_FactView_PSNU_IM_20170324_v2_2.txt", header = TRUE, sep = "\t", fill = TRUE)
+  fvdata <- read.table("ICPI_FactView_PSNU_IM_20170515_v1_1.txt", header = TRUE, sep = "\t", fill = TRUE)
 
 # change all header names to lower case to make it easier to use
   names(fvdata) <- tolower(names(fvdata))
@@ -98,7 +117,7 @@ library(readxl)
 ## IMPATT DATA ##
 
 #import Nat/SubNat data
-  impattdata <- read.table("ICPI_FactView_NAT_SUBNAT_20170324_v2_2.txt", header = TRUE, sep = "\t", fill = TRUE)
+  impattdata <- read.table("ICPI_FactView_NAT_SUBNAT_20170515_v1_1.txt", header = TRUE, sep = "\t", fill = TRUE)
 
 # change all header names to lower case to make it easier to use
   names(impattdata) <- tolower(names(impattdata))
