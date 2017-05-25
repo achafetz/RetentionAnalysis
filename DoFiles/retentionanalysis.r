@@ -6,6 +6,7 @@
 ## DEPENDENT LIBRARIES ##
 library("tidyverse")
 library("readxl")
+library("readr")
 
 
 ## DISTRICT CROSSWALK ACROSS DATASETS ##
@@ -60,8 +61,8 @@ library("readxl")
     mutate_each(funs(drugs_bothsex/total_drugs_bothsex), contains("drugs_bothsex")) %>% 
     mutate_each(funs(./total_condom), contains("condom_")) %>%
     
-    # convert from .753 to 75.3
-    mutate_each(funs(round(.*100,1)), drugs_male, drugs_female, drugs_bothsex, tested_pct,
+    # round pct
+    mutate_each(funs(round(.,3)), drugs_male, drugs_female, drugs_bothsex, tested_pct,
                 contains('prevention'), 
                 contains('attitude'), 
                 contains('access'),
@@ -71,11 +72,11 @@ library("readxl")
     #remove original AIS dataset
     rm(aisdata)
   
-## FACT VIEW DATA ##
+# FACT VIEW DATA ##
   
 #import data and call the dataframe factviewdata
   setwd("C:/Users/achafetz/Documents/ICPI/Data/")
-  fvdata <- read.table("ICPI_FactView_PSNU_IM_20170515_v1_1.txt", header = TRUE, sep = "\t", fill = TRUE)
+  fvdata <- read_delim("ICPI_FactView_PSNU_20170515_v1_1.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
 
 # change all header names to lower case to make it easier to use
   names(fvdata) <- tolower(names(fvdata))
@@ -85,13 +86,10 @@ library("readxl")
     filter(operatingunit == "Botswana", indicator == "TX_RET", disaggregate == "Total Denominator" | disaggregate == "Total Numerator") %>%
     select(psnu, psnuuid, fy16snuprioritization, numeratordenom, fy2016apr)
 
-#destring APR data
-  bots_fvdata$fy2016apr <-as.numeric(bots_fvdata$fy2016apr)
-
 #aggregate
   bots_fvdata <- bots_fvdata %>%
     group_by(psnu, psnuuid, fy16snuprioritization, numeratordenom) %>%
-    summarize_each(funs(sum), fy2016apr) %>%
+    summarize_each(funs(sum(., na.rm=TRUE)), fy2016apr) %>%
     ungroup
 
 #reshape wide
@@ -117,6 +115,7 @@ library("readxl")
 ## IMPATT DATA ##
 
 #import Nat/SubNat data
+  setwd("C:/Users/achafetz/Documents/ICPI/Data/")
   impattdata <- read.table("ICPI_FactView_NAT_SUBNAT_20170515_v1_1.txt", header = TRUE, sep = "\t", fill = TRUE)
 
 # change all header names to lower case to make it easier to use
@@ -127,7 +126,7 @@ library("readxl")
     filter(operatingunit == "Botswana", indicator == "PLHIV (SUBNAT)" | indicator == "TX_CURR_SUBNAT", disaggregate == "Total Numerator") %>%
     select(psnu, psnuuid, fy16snuprioritization, indicator, fy2016)
 
-  rm(bots_impattdata)
+  rm(impattdata)
 
 #rename indicators for reshape 
   levels(bots_impattdata$indicator)[match("PLHIV (SUBNAT)",levels(bots_impattdata$indicator))] <- "plhiv"
@@ -169,6 +168,16 @@ bots_eadata <- bots_eadata %>%
     subset(select = -c(fv_districts, ea_districts, ais_districts)) %>%
     select(district, everything())
 
-#merge all
-  bots <- full_join(bots_eadata, bots_fvdata, by="district")
-  bots <- full_join(bots, aisdata, by="district")
+  
+## MERGE ALL ##
+  #merge
+  df_bots <- full_join(bots_eadata, bots_fvdata, by="district")
+  df_bots <- full_join(df_bots, bots_impattdata, by="district")
+  df_bots <- full_join(df_bots, bots_aisdata, by="district")
+  
+  #remove original dataframes
+  rm(bots_aisdata, bots_eadata, bots_fvdata, bots_impattdata, crosswalk)
+  
+  #clean up non applicable districts from EA
+  df_bots <- filter(df_bots, !district %in% c(NA, "Above National","National", "_Commodity Botswana"))
+  
