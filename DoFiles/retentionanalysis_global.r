@@ -45,18 +45,22 @@ library("readr")
     mutate(tx_ret_pct = round(tx_ret_num/tx_ret_denom, 3)) %>%
     
     #reorder
-    select(operatingunit:tx_ret_num, tx_ret_pct, tx_new)
+    select(operatingunit:tx_ret_num, tx_ret_pct, tx_new) %>%
     
     #adjust psnu/psnuuid to snu1/snu1uid if EA was collected at higher level of the hierarchy
     mutate(psnu = 
            ifelse(operatingunit %in% 
                     c("Nigeria", "Democratic Republic of the Congo", 
-                      "Ethiopia", "Burma", "India"), snu1, psnu))  
+                      "Ethiopia", "Burma", "India", "South Sudan"), snu1, psnu))  %>%
   
     mutate(psnuuid = 
              ifelse(operatingunit %in% 
                       c("Nigeria", "Democratic Republic of the Congo", 
-                        "Ethiopia", "Burma", "India"), snu1uid, psnuuid))
+                        "Ethiopia", "Burma", "India", "South Sudan"), snu1uid, psnuuid)) %>%
+  
+    #remove Burundi column with missing data and no psnuuid
+    subset(!is.na(psnuuid))
+    
   #drop fv dataset
   rm(fvdata)
   
@@ -83,11 +87,7 @@ library("readr")
   df_global <- full_join(df_mer, df_ea, by="psnuuid")
   
   
-  #compare districts
+  #compare mer/ea mismatched districts
   df_districts <- select(df_global, psnuuid, countryname, snu1, psnu, ea_districts, national_sub_sub_unit, ou)
- 
   write.table(df_districts, "C:/Users/achafetz/Documents/GitHub/RetentionAnalysis/Documents/districts.txt", sep = "\t")
-  
-  
-  df_test <- filter(df_ea, operatingunit == "Ghana")
   
