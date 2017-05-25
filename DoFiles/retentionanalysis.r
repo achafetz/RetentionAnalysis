@@ -180,4 +180,9 @@ bots_eadata <- bots_eadata %>%
   
   #clean up non applicable districts from EA
   df_bots <- filter(df_bots, !district %in% c(NA, "Above National","National", "_Commodity Botswana"))
+ 
+  
+## EXPORT ## 
+
+  write.csv(df_bots, "C:/Users/achafetz/Documents/GitHub/RetentionAnalysis/Data/ret_bots.csv", na="")
   
