@@ -188,12 +188,14 @@ v
     summary(h1b)
   h1c <- lm(tx_ret_pct ~ cbcts_rtnadhr_exp + plhiv + tx_curr_subnat + factor(fy16snuprioritization), data=df_global_h1)
     summary (h1c)
-  h1c <- lm(tx_ret_pct ~ cbcts_rtnadhr_exp + plhiv + tx_curr_subnat + factor(operatingunit), data=df_global_h1)
-    summary (h1c)
+  h1d <- lm(tx_ret_pct ~ cbcts_rtnadhr_exp + plhiv + tx_curr_subnat + factor(operatingunit), data=df_global_h1)
+    summary (h1d)
+  h1e <- lm(tx_ret_pct ~ cbcts_rtnadhr_exp + plhiv + tx_curr_subnat + factor(fy16snuprioritization) + factor(operatingunit), data=df_global_h1)
+    summary (h1e)
     
 #output
-stargazer(h1a, h1b, h1c, h1d, type = "text")
-rm(df_global_h1, df_global_ou, h1a, h1b, h1c)
+stargazer(h1a, h1b, h1c, h1d, h1e, type = "text")
+rm(df_global_h1, df_global_ou, h1a, h1b, h1c, h1d, h1e, x)
 
 
 ## LINKAGE GRAPHS ##
@@ -240,13 +242,21 @@ rm(df_global_h1, df_global_ou, h1a, h1b, h1c)
 #models
   #lm(tx_ret_pct ~ cbcts_rtnadhr_exp, data=df_global_h1) %>% summary %>% tidy %>% kable(digits = 3, col.names = c("Param", "B", "SE", "t", "p"))
   h2a <- lm(tx_new ~ cbcts_lnkg_exp, data=df_global_h2)
-  summary(h1a)
-  
-h2 <-  lm(tx_new ~ cbcts_lnkg_exp + plhiv + tx_curr_subnat, data=df_global_h2)
-summary(h2)
+    summary(h2a)
+  h2b <- lm(tx_new ~ cbcts_lnkg_exp + plhiv + tx_curr_subnat , data=df_global_h2)
+    summary(h2b)
+  h2c <-  lm(tx_new ~ cbcts_lnkg_exp + plhiv + tx_curr_subnat + factor(fy16snuprioritization), data=df_global_h2)
+    summary(h2c)
+  h2d <-  lm(tx_new ~ cbcts_lnkg_exp + plhiv + tx_curr_subnat + factor(operatingunit), data=df_global_h2)
+    summary(h2d)
+  h2e <-  lm(tx_new ~ cbcts_lnkg_exp + plhiv + tx_curr_subnat + factor(fy16snuprioritization) + factor(operatingunit), data=df_global_h2)
+    summary(h2e)
 
+#output
+    stargazer(h2a, h2b, h2c, h2d, h2e, type = "text")
 
-
+    
+    
 ## EXPORT DATA ###
 
 write.csv(df_global_h1, "C:/Users/achafetz/Documents/GitHub/RetentionAnalysis/Data/ret_global.csv", na="")
