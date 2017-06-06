@@ -258,7 +258,8 @@ rm(df_global_h1, df_global_ou, h1a, h1b, h1c, h1d, h1e, x)
     
     
 ## EXPORT DATA ###
-
-write.csv(df_global_h1, "C:/Users/achafetz/Documents/GitHub/RetentionAnalysis/Data/ret_global.csv", na="")
+  write.csv(df_global, "C:/Users/achafetz/Documents/GitHub/RetentionAnalysis/Data/ret_global.csv", na="")
+    
+  write.csv(df_global_h1, "C:/Users/achafetz/Documents/GitHub/RetentionAnalysis/Data/ret_global.csv", na="")
 
 
