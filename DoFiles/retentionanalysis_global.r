@@ -1,8 +1,10 @@
+
 # Retention Analysis R Script
 # DRAFT
 # https://github.com/achafetz/RetentionAnalysis/wiki/Draft-R-Code
 
 ## DEPENDENT LIBRARIES ##
+library("plyr")
 library("tidyverse")
 library("readxl")
 library("readr")
@@ -83,7 +85,7 @@ library("scales")
                  ifelse(operatingunit %in% 
                             c("Nigeria", "Democratic Republic of the Congo", 
                               "Ethiopia", "Burma", "India", "South Sudan"), snu1uid, psnuuid)) %>%
-      filter(indicator %in% c("PLHIV (SUBNAT)", "TX_CURR_SUBNAT"), disaggregate == "Total Numerator", psnuuid!="") %>%
+      filter(indicator %in% c("PLHIV (SUBNAT)", "TX_CURR_SUBNAT", "POP_EST (SUBNAT)"), disaggregate == "Total Numerator", psnuuid!="") %>%
       select(psnuuid, indicator, fy2016) %>%
       
       #aggregate so just one line per psnu
@@ -100,6 +102,7 @@ library("scales")
 #rename column headers
   names(df_impattdata)[names(df_impattdata) == 'PLHIV (SUBNAT)'] <- 'plhiv'
   names(df_impattdata)[names(df_impattdata) == 'TX_CURR_SUBNAT'] <- 'tx_curr_subnat'
+  names(df_impattdata)[names(df_impattdata) == 'POP_EST (SUBNAT)'] <- 'pop'
 
 
 ## EA DATA NAV DATA ##
@@ -114,23 +117,42 @@ library("scales")
 #subset
   df_ea <- df_ea %>%
       filter(rptgcycle==2016 & data_type=="De-Dup") %>%
-      select(ou, national_sub_unit, national_sub_sub_unit,datim_snu_id, cbcts_lnkg_exp, cbcts_rtnadhr_exp, fbcts_loaded_tot)
+      select(ou, national_sub_unit, national_sub_sub_unit,datim_snu_id, cbcts_nonfbt_exp, cbcts_lnkg_exp, cbcts_rtnadhr_exp, cbcts_othcare_exp, cbcts_loaded_tot, fbcts_loaded_tot)
 
 #rename for merge
   df_ea <- rename(df_ea, ea_districts = national_sub_unit)
   df_ea <- rename(df_ea, psnuuid = datim_snu_id)
   
-  df_global <- full_join(df_mer, df_ea, by="psnuuid")
-  df_global <- full_join(df_global, df_impattdata, by="psnuuid")
+  df_global <- left_join(df_mer, df_ea, by="psnuuid")
+  df_global <- left_join(df_global, df_impattdata, by="psnuuid")
 
+  df_global <- subset(df_global, select = -c(ou, ea_districts, national_sub_sub_unit))
+  
 #remove intermediate dfs
   rm(df_ea, df_impattdata, df_mer)
 
+#create adjusted expenses
+  df_global <- df_global %>% 
+    mutate(rtnadhr_exp_per_plhiv = round(cbcts_rtnadhr_exp/plhiv, 3)) %>%
+    mutate(lnkg_exp_per_plhiv = round(cbcts_lnkg_exp/plhiv, 3))
   
-## RETENTION GRAPHS ##
-
+ 
+  
+## RETENTION ##
+  
 #dataset  
-  df_global_h1 <- filter(df_global, is.finite(tx_ret_pct), tx_ret_denom!=0, tx_ret_pct<=1, is.finite(cbcts_rtnadhr_exp))
+  df_global_h1 <- filter(df_global, is.finite(tx_ret_pct), tx_ret_denom!=0, tx_ret_pct<=1)
+  
+#how many zeros or 1s
+  filter(df_global_h1,tx_ret_denom==0 | tx_ret_pct==1) 
+  summary(df_global_h1$tx_ret_pct)
+  ggplot(df_global_h1, aes(tx_ret_pct)) + 
+    geom_histogram() + 
+    labs(title = "Treatment retention histogram (PEPFAR FY16)", x = "treatment retention", y ="frequency") +
+    scale_x_continuous(labels = scales::percent)
+  
+  
+# GRAPHS
 
 #Ret by OU
   df_global_ou <- df_global_h1 %>%
@@ -151,8 +173,7 @@ library("scales")
     scale_y_continuous(labels = scales::percent) +
     geom_point(shape=1)
 
-v
-  
+
 #Ret Spending v RET scatter
   ggplot(df_global_h1, aes(cbcts_rtnadhr_exp, tx_ret_pct)) +
     labs(x="Comm. Ret/Adh. Spending", y="Tx Retention") +
@@ -177,25 +198,61 @@ v
 
 
 ## RETENTION MODELS ##
+  
+#model comparison -> transformations and linear v logit
+  
+  h1a <- lm(tx_ret_pct ~ cbcts_rtnadhr_exp, data=df_global_h1, na.action = na.exclude)
+  summary(fitted(h1a))
+  df_global_h1b <- filter(df_global_h1, is.finite(rtnadhr_exp_per_plhiv))
+  h1a2 <- lm(tx_ret_pct ~ rtnadhr_exp_per_plhiv, data=df_global_h1b, na.action = na.exclude)
+  summary(fitted(h1a2))
+  df_global_h1c <- df_global_h1 %>%
+    mutate(ln_rtnadhr_exp = log(cbcts_rtnadhr_exp)) %>%
+    filter(is.finite(ln_rtnadhr_exp))
+  h1a3 <- lm(tx_ret_pct ~ ln_rtnadhr_exp, data=df_global_h1c, na.action = na.exclude)
+  summary(fitted(h1a3))
+  h1f <- glm(tx_ret_pct ~ cbcts_rtnadhr_exp, data=df_global_h1, family=binomial(link="logit"))
+  h1f2 <- glm(tx_ret_pct ~ rtnadhr_exp_per_plhiv, data=df_global_h1b, family=binomial (link="logit"), na.action=na.omit)
+  h1f3 <- glm(tx_ret_pct ~ ln_rtnadhr_exp, data=df_global_h1c, family=binomial (link="logit"), na.action=na.omit)
+  
+  stargazer(h1a, h1a2, h1a3, h1f, h1f2, h1f3, type = "text")
+  stargazer(h1a, h1a2, h1a3, h1f, h1f2, h1f3, type = "html", 
+            dep.var.labels=c("treatment retention (%)"),
+            covariate.labels=c("Community retention spending", "Comm. spending per PLHIV", "Log comm. spending"),
+            out="ret_out_comp.htm")
+  
 #correlation
   x <- select(df_global_h1, tx_ret_pct, cbcts_rtnadhr_exp)
   cor(x)
-#models
+#linear models
   #lm(tx_ret_pct ~ cbcts_rtnadhr_exp, data=df_global_h1) %>% summary %>% tidy %>% kable(digits = 3, col.names = c("Param", "B", "SE", "t", "p"))
   h1a <- lm(tx_ret_pct ~ cbcts_rtnadhr_exp, data=df_global_h1)
-    summary(h1a)
   h1b <- lm(tx_ret_pct ~ cbcts_rtnadhr_exp + plhiv + tx_curr_subnat, data=df_global_h1)
-    summary(h1b)
   h1c <- lm(tx_ret_pct ~ cbcts_rtnadhr_exp + plhiv + tx_curr_subnat + factor(fy16snuprioritization), data=df_global_h1)
-    summary (h1c)
-  h1c <- lm(tx_ret_pct ~ cbcts_rtnadhr_exp + plhiv + tx_curr_subnat + factor(operatingunit), data=df_global_h1)
-    summary (h1c)
+  h1d <- lm(tx_ret_pct ~ cbcts_rtnadhr_exp + plhiv + tx_curr_subnat + factor(operatingunit), data=df_global_h1)
+  h1e <- lm(tx_ret_pct ~ cbcts_rtnadhr_exp + plhiv + tx_curr_subnat + factor(fy16snuprioritization) + factor(operatingunit), data=df_global_h1)
     
-#output
-stargazer(h1a, h1b, h1c, h1d, type = "text")
-rm(df_global_h1, df_global_ou, h1a, h1b, h1c)
+#linear output
+  stargazer(h1a, h1b, h1c, h1d, h1e, type = "text")
+  stargazer(h1a, h1b, h1c, h1d, h1e, type = "html", out="ret_out.htm")
+  rm(df_global_ou, h1a, h1b, h1c, h1d, h1e, x)
 
 
+#logisitc models
+  h1f <- glm(tx_ret_pct ~ cbcts_rtnadhr_exp, data=df_global_h1, family=binomial(link="logit"))
+    h1f2 <- glm(tx_ret_pct ~ rtnadhr_exp_per_plhiv, data=df_global_h1, family=quasibinomial (link="logit"), na.action=na.omit) %>% summary()
+    h1f3 <- glm(tx_ret_pct ~ log(rtnadhr_exp_per_plhiv), data=df_global_h1, family=binomial(link="logit")) %>% summary()
+  h1g <- glm(tx_ret_pct ~ cbcts_rtnadhr_exp + plhiv + tx_curr_subnat, data=df_global_h1, family=binomial(link="logit"))
+  h1h <- glm(tx_ret_pct ~ cbcts_rtnadhr_exp + plhiv + tx_curr_subnat + factor(fy16snuprioritization), data=df_global_h1, family=binomial(link="logit"))
+  h1i <- glm(tx_ret_pct ~ cbcts_rtnadhr_exp + plhiv + tx_curr_subnat + factor(operatingunit), data=df_global_h1, family=binomial(link="logit"))
+  h1j <- glm(tx_ret_pct ~ cbcts_rtnadhr_exp + plhiv + tx_curr_subnat + factor(fy16snuprioritization) + factor(operatingunit), data=df_global_h1, family=binomial(link="logit"))
+
+#logistic output
+  stargazer(h1f, h1f2, h1f3, type = "text")
+  stargazer(h1f, h1g, h1h, h1i, h1j, type = "text")
+  stargazer(h1f, h1g, h1h, h1i, h1j, type = "html", out="ret_out.htm")
+  rm(df_global_h1, h1f, h1g, h1h, h1i, h1j)
+  
 ## LINKAGE GRAPHS ##
 
 #dataset
@@ -238,17 +295,20 @@ rm(df_global_h1, df_global_ou, h1a, h1b, h1c)
   x <- select(df_global_h2, tx_new,  cbcts_lnkg_exp)
   cor(x)
 #models
-  #lm(tx_ret_pct ~ cbcts_rtnadhr_exp, data=df_global_h1) %>% summary %>% tidy %>% kable(digits = 3, col.names = c("Param", "B", "SE", "t", "p"))
   h2a <- lm(tx_new ~ cbcts_lnkg_exp, data=df_global_h2)
-  summary(h1a)
-  
-h2 <-  lm(tx_new ~ cbcts_lnkg_exp + plhiv + tx_curr_subnat, data=df_global_h2)
-summary(h2)
+  h2b <- lm(tx_new ~ cbcts_lnkg_exp + plhiv + tx_curr_subnat , data=df_global_h2)
+  h2c <- lm(tx_new ~ cbcts_lnkg_exp + plhiv + tx_curr_subnat + factor(fy16snuprioritization), data=df_global_h2)
+  h2d <- lm(tx_new ~ cbcts_lnkg_exp + plhiv + tx_curr_subnat + factor(operatingunit), data=df_global_h2)
+  h2e <- lm(tx_new ~ cbcts_lnkg_exp + plhiv + tx_curr_subnat + factor(fy16snuprioritization) + factor(operatingunit), data=df_global_h2)
 
-
-
+#output
+    stargazer(h2a, h2b, h2c, h2d, h2e, type = "text")
+    stargazer(h2a, h2b, h2c, h2d, h2e, type = "html", out = "linkage_output.htm")
+    
+    rm(df_global_h2, h2a, h2b, h2c, h2d, h2e)
 ## EXPORT DATA ###
-
-write.csv(df_global_h1, "C:/Users/achafetz/Documents/GitHub/RetentionAnalysis/Data/ret_global.csv", na="")
+  write.csv(df_global_h1, "C:/Users/achafetz/Documents/GitHub/RetentionAnalysis/Data/ret_global_h1.csv", na="")
+    
+  write.csv(df_global_h1, "C:/Users/achafetz/Documents/GitHub/RetentionAnalysis/Data/ret_global.csv", na="")
 
 
