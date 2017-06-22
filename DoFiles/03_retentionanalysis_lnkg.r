@@ -22,9 +22,14 @@ load("df_global.RData")
 
 ## LINKAGE MODELS ##
 
-#correlation
-x <- select(df_global, tx_new,  cbcts_lnkg_exp)
-cor(x)
+#review IV distribution
+summary(df_global$tx_new)
+#graph
+# retention histogram
+ggplot(df_global, aes(tx_new)) + 
+  geom_histogram() + 
+  labs(title = "New on treatment histogram (PEPFAR FY16)", x = "Patients new treatment", y ="frequency")
+
 #models
 h2a <- lm(tx_new ~ cbcts_lnkg_exp, data=df_global)
 h2b <- lm(tx_new ~ cbcts_lnkg_exp + plhiv + tx_curr_subnat , data=df_global)
