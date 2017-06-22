@@ -126,7 +126,10 @@ df_global_st <- filter(df_global, designation=="Standard")
 
 #linear output
 stargazer(h1a, h1b, h1c, h1d, h1e, type = "text")
-stargazer(h1a, h1b, h1c, h1d, h1e, type = "html", out="ret_out.htm")
+stargazer(h1a, h1b, h1c, h1d, h1e, type = "html", 
+  dep.var.labels=c("treatment retention (%)"),
+  covariate.labels=c("Log comm. spending", "PLHIV","Patients on Tx (nat'l)", "Non-scale up district"),
+  out="ret_out.htm")
 
 
 #plot model
@@ -138,21 +141,21 @@ stargazer(h1a, h1b, h1c, h1d, h1e, type = "html", out="ret_out.htm")
   
   #H1e - predicted v actual
   ggplot(df_global, aes(h1e_predict, tx_ret_pct)) +
-    labs(x="predicted", y="actual") +
+    labs(title= "TX_RET - Predicted v Actual", x="predicted", y="actual") +
     geom_point(shape=1) + 
     scale_y_continuous(labels = scales::percent) +
     scale_x_continuous(labels = scales::percent)
   
   #H1e - predicted v residuals
   ggplot(df_global, aes(h1e_predict, h1e_resid)) +
-    labs(x="predicted", y="residuals") +
+    labs(title= "TX_RET - Predicted v Residuals", x="predicted", y="residuals") +
     geom_point(shape=1) + 
     geom_hline(yintercept = 0, linetype="dashed")
     scale_y_continuous(labels = scales::percent)
 
   #H1e - residual plot
   ggplot(df_global, aes(ln_rtnadhr_exp, h1e_resid)) +
-    labs(x="Log Comm. Ret/Adh. Spending", y="Residuals (H1e)") +
+    labs(title= "TX_RET Residuals", x="Log Comm. Ret/Adh. Spending", y="Residuals (H1e)") +
     geom_point(shape=1) + 
     geom_hline(yintercept = 0, linetype="dashed")
 
