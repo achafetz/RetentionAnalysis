@@ -1,7 +1,7 @@
 # Retention Analysis
 # A.Chafetz, USAID
 # Purpose: analyze community retention
-# Updated: 6/22/17 
+# Updated: 6/28/17 
 # https://github.com/achafetz/RetentionAnalysis/wiki/Draft-R-Code
 
 
@@ -118,11 +118,11 @@ df_global_st <- filter(df_global, designation=="Standard")
   
 ## LINEAR MODEL including control variables ##
   #lm(tx_ret_pct ~ cbcts_rtnadhr_exp, data=df_global_h1) %>% summary %>% tidy %>% kable(digits = 3, col.names = c("Param", "B", "SE", "t", "p"))
-  h1a <- lm(tx_ret_pct ~ ln_rtnadhr_exp, data=df_global, na.action = na.exclude)
-  h1b <- lm(tx_ret_pct ~ ln_rtnadhr_exp + plhiv + tx_curr_subnat, data=df_global, na.action = na.exclude)
-  h1c <- lm(tx_ret_pct ~ ln_rtnadhr_exp + plhiv + tx_curr_subnat + scaleup, data=df_global, na.action = na.exclude)
-  h1d <- lm(tx_ret_pct ~ ln_rtnadhr_exp + plhiv + tx_curr_subnat + factor(operatingunit), data=df_global, na.action = na.exclude)
-  h1e <- lm(tx_ret_pct ~ ln_rtnadhr_exp + plhiv + tx_curr_subnat + scaleup + factor(operatingunit), data=df_global, na.action = na.exclude)
+  h1a <- lm(tx_ret_pct ~ ln_rtnadhr_exp, data=df_global_h1, na.action = na.exclude)
+  h1b <- lm(tx_ret_pct ~ ln_rtnadhr_exp + plhiv + tx_curr_subnat, data=df_global_h1, na.action = na.exclude)
+  h1c <- lm(tx_ret_pct ~ ln_rtnadhr_exp + plhiv + tx_curr_subnat + scaleup, data=df_global_h1, na.action = na.exclude)
+  h1d <- lm(tx_ret_pct ~ ln_rtnadhr_exp + plhiv + tx_curr_subnat + factor(operatingunit), data=df_global_h1, na.action = na.exclude)
+  h1e <- lm(tx_ret_pct ~ ln_rtnadhr_exp + plhiv + tx_curr_subnat + scaleup + factor(operatingunit), data=df_global_h1, na.action = na.exclude)
 
 #linear output
 stargazer(h1a, h1b, h1c, h1d, h1e, type = "text")

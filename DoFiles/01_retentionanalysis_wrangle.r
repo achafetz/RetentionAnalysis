@@ -165,7 +165,8 @@ library("scales")
   df_global <- df_global %>% 
     mutate(rtnadhr_exp_per_plhiv = round(cbcts_rtnadhr_exp/plhiv, 3)) %>%
     mutate(lnkg_exp_per_plhiv = round(cbcts_lnkg_exp/plhiv, 3)) %>%
-    mutate(ln_rtnadhr_exp = log(cbcts_rtnadhr_exp))
+    mutate(ln_rtnadhr_exp = log(cbcts_rtnadhr_exp)) %>%
+    mutate(ln_lnkg_exp = log(cbcts_lnkg_exp))
 
 #remove Inf
   is.na(df_global) <- sapply(df_global, is.infinite)
