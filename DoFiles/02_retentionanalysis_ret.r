@@ -1,7 +1,7 @@
 # Retention Analysis
 # A.Chafetz, USAID
 # Purpose: analyze community retention
-# Updated: 6/28/17 
+# Updated: 6/29/17 
 # https://github.com/achafetz/RetentionAnalysis/wiki/Draft-R-Code
 
 
@@ -31,6 +31,12 @@ df_global_h1 <- filter(df_global, tx_ret_denom!=0, tx_ret_pct<=1)
 #review IV distribution
   summary(df_global$tx_ret_pct)
 #graph
+  # retention spending
+    ggplot(df_global, aes(cbcts_rtnadhr_exp)) + 
+      geom_histogram() + 
+      labs(x = "retention expenditures ($)", y ="frequency") +
+      scale_x_continuous(labels = comma) + 
+      scale_y_continuous(labels = comma)
   # retention histogram
     ggplot(df_global, aes(tx_ret_pct)) + 
       geom_histogram() + 
@@ -85,7 +91,7 @@ df_global_h1 <- filter(df_global, tx_ret_denom!=0, tx_ret_pct<=1)
             out="ret_out_comp.htm")
   
   #remove stored values
-    rm(df_global_h1, h1a, h1a2, h1a3, h1f, h1f2, h1f3)
+    rm(h1a, h1a2, h1a3, h1f, h1f2, h1f3)
     
 #does it matter if we only look at Standard coutnries?
 df_global_st_h1 <- filter(df_global, tx_ret_denom!=0, tx_ret_pct<=1, designation=="Standard")
@@ -118,11 +124,11 @@ df_global_st <- filter(df_global, designation=="Standard")
   
 ## LINEAR MODEL including control variables ##
   #lm(tx_ret_pct ~ cbcts_rtnadhr_exp, data=df_global_h1) %>% summary %>% tidy %>% kable(digits = 3, col.names = c("Param", "B", "SE", "t", "p"))
-  h1a <- lm(tx_ret_pct ~ ln_rtnadhr_exp, data=df_global_h1, na.action = na.exclude)
-  h1b <- lm(tx_ret_pct ~ ln_rtnadhr_exp + plhiv + tx_curr_subnat, data=df_global_h1, na.action = na.exclude)
-  h1c <- lm(tx_ret_pct ~ ln_rtnadhr_exp + plhiv + tx_curr_subnat + scaleup, data=df_global_h1, na.action = na.exclude)
-  h1d <- lm(tx_ret_pct ~ ln_rtnadhr_exp + plhiv + tx_curr_subnat + factor(operatingunit), data=df_global_h1, na.action = na.exclude)
-  h1e <- lm(tx_ret_pct ~ ln_rtnadhr_exp + plhiv + tx_curr_subnat + scaleup + factor(operatingunit), data=df_global_h1, na.action = na.exclude)
+  h1a <- lm(tx_ret_pct ~ rtnadhr_exp_per_plhiv, data=df_global_h1, na.action = na.exclude)
+  h1b <- lm(tx_ret_pct ~ rtnadhr_exp_per_plhiv + plhiv + tx_curr_subnat, data=df_global_h1, na.action = na.exclude)
+  h1c <- lm(tx_ret_pct ~ rtnadhr_exp_per_plhiv + plhiv + tx_curr_subnat + scaleup, data=df_global_h1, na.action = na.exclude)
+  h1d <- lm(tx_ret_pct ~ rtnadhr_exp_per_plhiv + plhiv + tx_curr_subnat + factor(operatingunit), data=df_global_h1, na.action = na.exclude)
+  h1e <- lm(tx_ret_pct ~ rtnadhr_exp_per_plhiv + plhiv + tx_curr_subnat + scaleup + factor(operatingunit), data=df_global_h1, na.action = na.exclude)
 
 #linear output
 stargazer(h1a, h1b, h1c, h1d, h1e, type = "text")
@@ -135,27 +141,27 @@ stargazer(h1a, h1b, h1c, h1d, h1e, type = "html",
 #plot model
 
   #add residuals and predicted values to df
-  df_global <- df_global %>%
+  df_global_h1 <- df_global_h1 %>%
     mutate(h1e_resid = resid(h1e)) %>%
     mutate(h1e_predict = predict(h1e))
   
   #H1e - predicted v actual
-  ggplot(df_global, aes(h1e_predict, tx_ret_pct)) +
+  ggplot(df_global_h1, aes(h1e_predict, tx_ret_pct)) +
     labs(title= "TX_RET - Predicted v Actual", x="predicted", y="actual") +
     geom_point(shape=1) + 
     scale_y_continuous(labels = scales::percent) +
     scale_x_continuous(labels = scales::percent)
   
   #H1e - predicted v residuals
-  ggplot(df_global, aes(h1e_predict, h1e_resid)) +
+  ggplot(df_global_h1, aes(h1e_predict, h1e_resid)) +
     labs(title= "TX_RET - Predicted v Residuals", x="predicted", y="residuals") +
     geom_point(shape=1) + 
-    geom_hline(yintercept = 0, linetype="dashed")
+    geom_hline(yintercept = 0, linetype="dashed") +
     scale_y_continuous(labels = scales::percent)
 
   #H1e - residual plot
-  ggplot(df_global, aes(ln_rtnadhr_exp, h1e_resid)) +
-    labs(title= "TX_RET Residuals", x="Log Comm. Ret/Adh. Spending", y="Residuals (H1e)") +
+  ggplot(df_global_h1, aes(rtnadhr_exp_per_plhiv, h1e_resid)) +
+    labs(title= "TX_RET Residuals", x="Ret/Adh. Spending per PLHIV", y="Residuals (H1e)") +
     geom_point(shape=1) + 
     geom_hline(yintercept = 0, linetype="dashed")
 

@@ -1,7 +1,7 @@
 # Retention Analysis
 # A.Chafetz, USAID
 # Purpose: analyze community linkage
-# Updated: 6/28/17 
+# Updated: 6/29/17 
 # https://github.com/achafetz/RetentionAnalysis/wiki/Draft-R-Code
 
 
@@ -22,8 +22,11 @@ load("df_global.RData")
 
 ## LINKAGE MODELS ##
 
-#review IV distribution
+#review DV distribution
 summary(df_global$tx_new)
+
+#review linakge spending distribution
+summary(df_global$cbcts_lnkg_exp)
 
 #remove districts with no TX_NEW
   print(nrow(filter(df_global,tx_new==0))) #main dataset
@@ -34,13 +37,16 @@ summary(df_global$tx_new)
   ggplot(df_global_h2, aes(tx_new)) + 
     geom_histogram() + 
     labs(title = "New on treatment histogram (PEPFAR FY16)", x = "Patients new treatment", y ="frequency")
+  ggplot(df_global_h2, aes(ln_lnkg_exp)) + 
+    geom_histogram() + 
+    labs(title = "Community linkage expenditure histogram (PEPFAR EA FY16)", x= "Log community linkage expenditures", y="frequency")
 
 #models
 h2a <- lm(tx_new ~ ln_lnkg_exp, data=df_global_h2)
-h2b <- lm(tx_new ~ ln_lnkg_exp + plhiv + tx_curr_subnat , data=df_global_h2)
-h2c <- lm(tx_new ~ ln_lnkg_exp + plhiv + tx_curr_subnat + scaleup, data=df_global_h2)
-h2d <- lm(tx_new ~ ln_lnkg_exp + plhiv + tx_curr_subnat + factor(operatingunit), data=df_global_h2)
-h2e <- lm(tx_new ~ ln_lnkg_exp + plhiv + tx_curr_subnat + scaleup + factor(operatingunit), data=df_global_h2)
+h2b <- lm(tx_new ~ ln_lnkg_exp + plhiv + tx_curr_subnat, data=df_global_h2, na.action = na.exclude)
+h2c <- lm(tx_new ~ ln_lnkg_exp + plhiv + tx_curr_subnat + scaleup, data=df_global_h2, na.action = na.exclude)
+h2d <- lm(tx_new ~ ln_lnkg_exp + plhiv + tx_curr_subnat + factor(operatingunit), data=df_global_h2, na.action = na.exclude)
+h2e <- lm(tx_new ~ ln_lnkg_exp + plhiv + tx_curr_subnat + scaleup + factor(operatingunit), data=df_global_h2, na.action = na.exclude)
 
 #output
 stargazer(h2a, h2b, h2c, h2d, h2e, type = "text")
@@ -50,7 +56,7 @@ stargazer(h2a, h2b, h2c, h2d, h2e, type = "html", out = "linkage_output.htm")
 #plot model
 
 #add residuals and predicted values to df
-df_global <- df_global_h2 %>%
+df_global_h2 <- df_global_h2 %>%
   mutate(h2e_resid = resid(h2e)) %>%
   mutate(h2e_predict = predict(h2e))
 
@@ -58,21 +64,24 @@ df_global <- df_global_h2 %>%
 ggplot(df_global_h2, aes(h2e_predict, tx_new)) +
   labs(title= "TX_New - Predicted v Actual", x="predicted", y="actual") +
   geom_point(shape=1) + 
-  scale_y_continuous(labels = scales::percent) +
-  scale_x_continuous(labels = scales::percent)
+  scale_y_continuous(labels = comma) + 
+  scale_x_continuous(labels = comma)
 
 #H2e - predicted v residuals
 ggplot(df_global_h2, aes(h2e_predict, h2e_resid)) +
   labs(title= "TX_NEW - Predicted v Residuals", x="predicted", y="residuals") +
   geom_point(shape=1) + 
-  geom_hline(yintercept = 0, linetype="dashed")
-scale_y_continuous(labels = scales::percent)
+  geom_hline(yintercept = 0, linetype="dashed") + 
+  scale_y_continuous(labels = comma) + 
+  scale_x_continuous(labels = comma)
 
 #H2e - residual plot
 ggplot(df_global_h2, aes(tx_new, h2e_resid)) +
   labs(title= "TX_New Residuals", x="TX_NEW", y="Residuals (H2e)") +
   geom_point(shape=1) + 
-  geom_hline(yintercept = 0, linetype="dashed")
+  geom_hline(yintercept = 0, linetype="dashed") + 
+  scale_y_continuous(labels = comma) + 
+  scale_x_continuous(labels = comma)
 
 
 rm(df_global_h2, h2a, h2b, h2c, h2d, h2e)

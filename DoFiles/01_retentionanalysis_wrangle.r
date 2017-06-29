@@ -28,7 +28,7 @@ library("scales")
 # subset fv to only & key indicators
   df_mer <- fvdata %>%
     filter(indicator %in% c("TX_RET","TX_NEW"), disaggregate %in% c("Total Denominator", "Total Numerator")) %>%
-    select(operatingunit, countryname, snu1, snu1uid, psnu, psnuuid, fy16snuprioritization, indicator,numeratordenom, fy2016apr)
+    select(operatingunit, countryname, snu1, snu1uid, psnu, psnuuid, fy16snuprioritization, indicator, numeratordenom, fy2016apr)
 
 #aggregate for reshape
   df_mer <- df_mer %>%
@@ -45,6 +45,20 @@ library("scales")
     rename(tx_ret_num = TX_RET) %>%
     rename(tx_new = TX_NEW) %>%
     
+    #adjust psnu/psnuuid to snu1/snu1uid if EA was collected at higher level of the hierarchy & remove prioritization
+    mutate(psnu = 
+             ifelse(operatingunit %in% 
+                      c("Nigeria", "Democratic Republic of the Congo", 
+                        "Ethiopia", "Burma", "India", "South Sudan"), snu1, psnu))  %>%
+    mutate(psnuuid = 
+             ifelse(operatingunit %in% 
+                      c("Nigeria", "Democratic Republic of the Congo", 
+                        "Ethiopia", "Burma", "India", "South Sudan"), snu1uid, psnuuid)) %>%
+    mutate(fy16snuprioritization = 
+             ifelse(operatingunit %in% 
+                      c("Nigeria", "Democratic Republic of the Congo", 
+                        "Ethiopia", "Burma", "India", "South Sudan"), NA, fy16snuprioritization)) %>%
+    
     #aggregate so just one line per psnu
     group_by(operatingunit, countryname, snu1, snu1uid, psnu, psnuuid, fy16snuprioritization) %>%
     summarize_each(funs(sum(., na.rm=TRUE)), tx_ret_denom, tx_ret_num, tx_new) %>%
@@ -53,19 +67,6 @@ library("scales")
     #create a retention variable
     mutate(tx_ret_pct = round(tx_ret_num/tx_ret_denom, 3)) %>%
     
-    #adjust psnu/psnuuid to snu1/snu1uid if EA was collected at higher level of the hierarchy
-    mutate(psnu = 
-             ifelse(operatingunit %in% 
-                      c("Nigeria", "Democratic Republic of the Congo", 
-                        "Ethiopia", "Burma", "India", "South Sudan"), snu1, psnu))  %>%
-    
-    mutate(psnuuid = 
-             ifelse(operatingunit %in% 
-                      c("Nigeria", "Democratic Republic of the Congo", 
-                        "Ethiopia", "Burma", "India", "South Sudan"), snu1uid, psnuuid)) %>%
-    
-
-  
     # add STAR v Standard OU designation
     mutate(designation = 
             ifelse(operatingunit %in%
@@ -170,11 +171,6 @@ library("scales")
 
 #remove Inf
   is.na(df_global) <- sapply(df_global, is.infinite)
-  
-#remove Ethiopia district with 68% retention
-  #nrow(filter(df_global,tx_ret_pct>1))
-  #high_ret <- filter(df_global,tx_ret_pct>1)
-  df_global <- filter(df_global, (is.nan(tx_ret_pct)| is.na(tx_ret_pct) | tx_ret_pct<2))
 
 #save output
   save(df_global, file = "df_global.RData")
