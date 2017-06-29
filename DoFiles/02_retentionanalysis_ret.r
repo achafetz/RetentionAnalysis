@@ -134,7 +134,7 @@ df_global_st <- filter(df_global, designation=="Standard")
 stargazer(h1a, h1b, h1c, h1d, h1e, type = "text")
 stargazer(h1a, h1b, h1c, h1d, h1e, type = "html", 
   dep.var.labels=c("treatment retention (%)"),
-  covariate.labels=c("Log comm. spending", "PLHIV","Patients on Tx (nat'l)", "Non-scale up district"),
+  covariate.labels=c("Comm. spending per PLHIV", "PLHIV","Patients on Tx (nat'l)", "Non-scale up district"),
   out="ret_out.htm")
 
 
