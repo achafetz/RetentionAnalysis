@@ -1,33 +1,19 @@
 # Retention Analysis
 # A.Chafetz, USAID
 # Purpose: analyze community retention
-# Updated: 6/29/17 
+# Updated: 6/30/17 
 # https://github.com/achafetz/RetentionAnalysis/wiki/Draft-R-Code
 
 
-## DEPENDENT LIBRARIES ##
-library("plyr")
-library("tidyverse")
-library("readxl")
-library("readr")
-library("ggplot2")
-library("broom")
-library("knitr")
-library("stargazer")
-library("scales")
-
 #load global file created
-setwd("C:/Users/achafetz/Documents/GitHub/RetentionAnalysis/Data")
-load("df_global.RData")
+load(paste0(data, "df_global.RData"))
 
 ## RETENTION ##
 
 #dataset (for logitistice model -> must be bound between 0<x<=1)
-df_global_h1 <- filter(df_global, tx_ret_denom!=0, tx_ret_pct<=1)
+  print(nrow(filter(df_global,tx_ret_pct>1)))
+  df_global_h1 <- filter(df_global, tx_ret_denom!=0, tx_ret_pct<=1)
 
-#how many rows with zeros or 1s
-  print(nrow(filter(df_global,tx_ret_denom==0 | tx_ret_pct==1))) #main dataset
-  print(nrow(filter(df_global_h1,tx_ret_denom==0 | tx_ret_pct==1))) #filtered dataset
 #review IV distribution
   summary(df_global$tx_ret_pct)
 #graph
@@ -65,15 +51,11 @@ df_global_h1 <- filter(df_global, tx_ret_denom!=0, tx_ret_pct<=1)
 
   #linear
     #raw exp
-    h1a <- lm(tx_ret_pct ~ cbcts_rtnadhr_exp, data=df_global, na.action = na.exclude)
+    h1a <- lm(tx_ret_pct ~ cbcts_rtnadhr_exp, data=df_global_h1, na.action = na.exclude)
     #exp per plhiv
-    h1a2 <- lm(tx_ret_pct ~ rtnadhr_exp_per_plhiv, data=df_global, na.action = na.exclude)
+    h1a2 <- lm(tx_ret_pct ~ rtnadhr_exp_per_plhiv, data=df_global_h1, na.action = na.exclude)
     #log exp
-    h1a3 <- lm(tx_ret_pct ~ ln_rtnadhr_exp, data=df_global, na.action = na.exclude)
-      #make sure linear predicted values are bound between 0 and 1
-      summary(fitted(h1a))
-      summary(fitted(h1a2))
-      summary(fitted(h1a3))
+    h1a3 <- lm(tx_ret_pct ~ ln_rtnadhr_exp, data=df_global_h1, na.action = na.exclude)
   #logistic
     #raw exp
     h1f <- glm(tx_ret_pct ~ cbcts_rtnadhr_exp, data=df_global_h1, family=binomial(link="logit"), na.action=na.exclude)
@@ -81,14 +63,17 @@ df_global_h1 <- filter(df_global, tx_ret_denom!=0, tx_ret_pct<=1)
     h1f2 <- glm(tx_ret_pct ~ rtnadhr_exp_per_plhiv, data=df_global_h1, family=binomial (link="logit"), na.action=na.exclude)
     #log exp
     h1f3 <- glm(tx_ret_pct ~ ln_rtnadhr_exp, data=df_global_h1, family=binomial (link="logit"), na.action=na.exclude)
-  
+    #make sure linear predicted values are bound between 0 and 1
+      summary(fitted(h1f))
+      summary(fitted(h1f2))
+      summary(fitted(h1f3))
   #print regression output
   stargazer(h1a, h1a2, h1a3, h1f, h1f2, h1f3, type = "text")
   #export regression output
   stargazer(h1a, h1a2, h1a3, h1f, h1f2, h1f3, type = "html", 
             dep.var.labels=c("treatment retention (%)"),
             covariate.labels=c("Community retention spending", "Comm. spending per PLHIV", "Log comm. spending"),
-            out="ret_out_comp.htm")
+            out= paste0(output,"ret_out_comp.htm"))
   
   #remove stored values
     rm(h1a, h1a2, h1a3, h1f, h1f2, h1f3)
@@ -126,16 +111,16 @@ df_global_st <- filter(df_global, designation=="Standard")
   #lm(tx_ret_pct ~ cbcts_rtnadhr_exp, data=df_global_h1) %>% summary %>% tidy %>% kable(digits = 3, col.names = c("Param", "B", "SE", "t", "p"))
   h1a <- lm(tx_ret_pct ~ rtnadhr_exp_per_plhiv, data=df_global_h1, na.action = na.exclude)
   h1b <- lm(tx_ret_pct ~ rtnadhr_exp_per_plhiv + plhiv + tx_curr_subnat, data=df_global_h1, na.action = na.exclude)
-  h1c <- lm(tx_ret_pct ~ rtnadhr_exp_per_plhiv + plhiv + tx_curr_subnat + scaleup, data=df_global_h1, na.action = na.exclude)
+  h1c <- lm(tx_ret_pct ~ rtnadhr_exp_per_plhiv + plhiv + tx_curr_subnat + nonscaleup, data=df_global_h1, na.action = na.exclude)
   h1d <- lm(tx_ret_pct ~ rtnadhr_exp_per_plhiv + plhiv + tx_curr_subnat + factor(operatingunit), data=df_global_h1, na.action = na.exclude)
-  h1e <- lm(tx_ret_pct ~ rtnadhr_exp_per_plhiv + plhiv + tx_curr_subnat + scaleup + factor(operatingunit), data=df_global_h1, na.action = na.exclude)
+  h1e <- lm(tx_ret_pct ~ rtnadhr_exp_per_plhiv + plhiv + tx_curr_subnat + nonscaleup + factor(operatingunit), data=df_global_h1, na.action = na.exclude)
 
 #linear output
 stargazer(h1a, h1b, h1c, h1d, h1e, type = "text")
 stargazer(h1a, h1b, h1c, h1d, h1e, type = "html", 
   dep.var.labels=c("treatment retention (%)"),
   covariate.labels=c("Comm. spending per PLHIV", "PLHIV","Patients on Tx (nat'l)", "Non-scale up district"),
-  out="ret_out.htm")
+  out=paste0(output, "ret_out.htm"))
 
 
 #plot model

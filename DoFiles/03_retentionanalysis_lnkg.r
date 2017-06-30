@@ -1,24 +1,12 @@
 # Retention Analysis
 # A.Chafetz, USAID
 # Purpose: analyze community linkage
-# Updated: 6/29/17 
+# Updated: 6/30/17 
 # https://github.com/achafetz/RetentionAnalysis/wiki/Draft-R-Code
 
 
-## DEPENDENT LIBRARIES ##
-library("plyr")
-library("tidyverse")
-library("readxl")
-library("readr")
-library("ggplot2")
-library("broom")
-library("knitr")
-library("stargazer")
-library("scales")
-
 #load global file created
-setwd("C:/Users/achafetz/Documents/GitHub/RetentionAnalysis/Data")
-load("df_global.RData")
+load(paste0(data, "df_global.RData"))
 
 ## LINKAGE MODELS ##
 
@@ -44,13 +32,13 @@ summary(df_global$cbcts_lnkg_exp)
 #models
 h2a <- lm(tx_new ~ ln_lnkg_exp, data=df_global_h2)
 h2b <- lm(tx_new ~ ln_lnkg_exp + plhiv + tx_curr_subnat, data=df_global_h2, na.action = na.exclude)
-h2c <- lm(tx_new ~ ln_lnkg_exp + plhiv + tx_curr_subnat + scaleup, data=df_global_h2, na.action = na.exclude)
+h2c <- lm(tx_new ~ ln_lnkg_exp + plhiv + tx_curr_subnat + nonscaleup, data=df_global_h2, na.action = na.exclude)
 h2d <- lm(tx_new ~ ln_lnkg_exp + plhiv + tx_curr_subnat + factor(operatingunit), data=df_global_h2, na.action = na.exclude)
-h2e <- lm(tx_new ~ ln_lnkg_exp + plhiv + tx_curr_subnat + scaleup + factor(operatingunit), data=df_global_h2, na.action = na.exclude)
+h2e <- lm(tx_new ~ ln_lnkg_exp + plhiv + tx_curr_subnat + nonscaleup + factor(operatingunit), data=df_global_h2, na.action = na.exclude)
 
 #output
 stargazer(h2a, h2b, h2c, h2d, h2e, type = "text")
-stargazer(h2a, h2b, h2c, h2d, h2e, type = "html", out = "linkage_output.htm")
+stargazer(h2a, h2b, h2c, h2d, h2e, type = "html", out = paste0(output, "linkage_output.htm"))
 
 
 #plot model

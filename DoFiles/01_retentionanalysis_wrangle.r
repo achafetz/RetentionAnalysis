@@ -1,26 +1,14 @@
 # Retention Analysis
 # A.Chafetz, USAID
 # Purpose: import and wrangle input datasets
-# Updated: 6/22/17 
+# Updated: 6/30/17 
 # https://github.com/achafetz/RetentionAnalysis/wiki/Draft-R-Code
 
-
-## DEPENDENT LIBRARIES ##
-library("plyr")
-library("tidyverse")
-library("readxl")
-library("readr")
-library("ggplot2")
-library("broom")
-library("knitr")
-library("stargazer")
-library("scales")
 
 # FACT VIEW DATA ##
 
 #import data and call the dataframe factviewdata
-  setwd("C:/Users/achafetz/Documents/ICPI/Data/")
-  fvdata <- read_delim("ICPI_FactView_PSNU_20170515_v1_1.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
+  fvdata <- read_delim(paste0(datafv, "ICPI_FactView_PSNU_20170515_v1_1.txt"), "\t", escape_double = FALSE, trim_ws = TRUE)
 
 # change all header names to lower case to make it easier to use
   names(fvdata) <- tolower(names(fvdata))
@@ -76,13 +64,13 @@ library("scales")
                       0,1)) %>%
   
     # add scaleup or other psnu designation
-    mutate(scaleup = 
+    mutate(nonscaleup = 
             ifelse(is.na(fy16snuprioritization), NA,
             ifelse(fy16snuprioritization %in% c("1 - Scale-Up: Saturation", "2 - Scale-Up: Aggressive"),
-                    1,0))) %>%
+                    0,1))) %>%
     
     #reorder
-    select(operatingunit:countryname, designation, snu1:fy16snuprioritization, scaleup, tx_ret_denom:tx_ret_num, tx_ret_pct, tx_new) %>%
+    select(operatingunit:countryname, designation, snu1:fy16snuprioritization, nonscaleup, tx_ret_denom:tx_ret_num, tx_ret_pct, tx_new) %>%
     
     #remove Burundi column with missing data and no psnuuid
     subset(!is.na(psnuuid))
@@ -91,8 +79,8 @@ library("scales")
     df_mer$designation <- factor(df_mer$designation,
                                 levels = c(0, 1), 
                                 labels = c("STAR", "Standard"))
-    df_mer$scaleup<- factor(df_mer$scaleup,
-                                 levels = c(1,0 ), 
+    df_mer$nonscaleup<- factor(df_mer$nonscaleup,
+                                 levels = c(0,1), 
                                  labels = c("Scale up", "Other"))
 
 
@@ -103,7 +91,7 @@ library("scales")
 ## IMPATT DATA ##
 
 #import Nat/SubNat data
-  impattdata <- read_delim("ICPI_FactView_NAT_SUBNAT_20170515_v1_1.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
+  impattdata <- read_delim(paste0(datafv,"ICPI_FactView_NAT_SUBNAT_20170515_v1_1.txt"), "\t", escape_double = FALSE, trim_ws = TRUE)
 
 # change all header names to lower case to make it easier to use
   names(impattdata) <- tolower(names(impattdata))
@@ -137,8 +125,7 @@ library("scales")
 ## EA DATA NAV DATA ##
 
 #import EA data from Botswana data nav tool
-  setwd("C:/Users/achafetz/Documents/GitHub/RetentionAnalysis/Data")
-  df_ea <- read_csv("2014-2016 allcntry SAS Output 24JAN17.csv")
+  df_ea <- read_csv(paste0(dataea,"2014-2016 allcntry SAS Output 24JAN17.csv"))
 
 # change all header names to lower case to make it easier to use
   names(df_ea) <- tolower(names(df_ea))
@@ -173,9 +160,9 @@ library("scales")
   is.na(df_global) <- sapply(df_global, is.infinite)
 
 #save output
-  save(df_global, file = "df_global.RData")
+  save(df_global, file = paste0(data, "df_global.RData"))
 
 ## EXPORT DATA ###
-#write.csv(df_global, "C:/Users/achafetz/Documents/GitHub/RetentionAnalysis/Data/ret_global.csv", na="")
+#write.csv(df_global, paste0(output, "C:/Users/achafetz/Documents/GitHub/RetentionAnalysis/Data/ret_global.csv"), na="")
 
 
