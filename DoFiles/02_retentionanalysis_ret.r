@@ -28,6 +28,8 @@ load(paste0(data, "df_global.RData"))
       geom_histogram() + 
       labs(title = "Treatment retention histogram (PEPFAR FY16)", x = "treatment retention", y ="frequency") +
       scale_x_continuous(labels = scales::percent)
+    #qqplot
+      ggplot(df_global_h1, aes(sample=tx_ret_pct)) + stat_qq()
   #Ret Spending v RET scatter
     ggplot(df_global_h1, aes(cbcts_rtnadhr_exp, tx_ret_pct)) +
       labs(x="Comm. Ret/Adh. Spending", y="Tx Retention") +
@@ -149,7 +151,8 @@ stargazer(h1a, h1b, h1c, h1d, h1e, type = "html",
     labs(title= "TX_RET Residuals", x="Ret/Adh. Spending per PLHIV", y="Residuals (H1e)") +
     geom_point(shape=1) + 
     geom_hline(yintercept = 0, linetype="dashed")
-
-          
+  
+  ggplot(df_global_h1, aes(sample = residuals(h1e))) + stat_qq()
+        
 #remove values
   rm(h1a, h1b, h1c, h1d, h1e)

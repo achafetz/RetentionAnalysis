@@ -30,7 +30,6 @@
   }
 #additional folders outside of project folder (due to large file size)
   datafv <- "C:/Users/achafetz/Documents/ICPI/Data/"
-  dataea <- "C:/Users/achafetz/Documents/GitHub/RetentionAnalysis/Data/"
   
 #clean up stored values
 rm(lib, projectpath, pfolder, folderlist, f)

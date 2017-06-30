@@ -125,7 +125,7 @@
 ## EA DATA NAV DATA ##
 
 #import EA data from Botswana data nav tool
-  df_ea <- read_csv(paste0(dataea,"2014-2016 allcntry SAS Output 24JAN17.csv"))
+  df_ea <- read_csv(paste0(data,"2014-2016 allcntry SAS Output 24JAN17.csv"))
 
 # change all header names to lower case to make it easier to use
   names(df_ea) <- tolower(names(df_ea))
