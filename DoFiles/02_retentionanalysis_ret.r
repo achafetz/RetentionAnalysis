@@ -45,6 +45,16 @@ load(paste0(data, "df_global.RData"))
       scale_y_continuous(labels = scales::percent) +
       geom_point(shape=1) +
       geom_smooth(method=lm, se=FALSE)
+  #Ret spending per PLHIV histogram
+    ggplot(df_global_h1, aes(rtnadhr_exp_per_plhiv)) + 
+      geom_histogram() + 
+      labs(x = "retention expenditures per PLHIV ($)", y ="frequency") +
+      scale_x_continuous(labels = comma) + 
+      scale_y_continuous(labels = comma)
+  #Log Ret Spending histogram
+    ggplot(df_global_h1, aes(ln_rtnadhr_exp)) + 
+      geom_histogram() + 
+      labs(x = "log comm. ret/adh. spending", y ="frequency")
 
     
 ## RETENTION MODELS ##
@@ -105,7 +115,7 @@ df_global_st <- filter(df_global, designation=="Standard")
   stargazer(h1sa, h1sa2, h1sa3, h1sf, h1sf2, h1sf3, type = "text")
 
   #remove stored values and dfs
-  rm(df_global_st, df_global_st_h1, df_global_h1, h1sa, h1sa2, h1sa3, h1sf, h1sf2, h1sf3)
+  rm(df_global_st, df_global_st_h1, h1sa, h1sa2, h1sa3, h1sf, h1sf2, h1sf3)
 
 
   
