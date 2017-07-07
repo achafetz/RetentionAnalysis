@@ -28,5 +28,5 @@ df_global %>%
   kable(format.args = list(big.mark = ","))
   
   
-
-
+nrow(df_global)
+ 
