@@ -1,7 +1,7 @@
 # Retention Analysis
 # A.Chafetz, USAID
 # Purpose: analyze community retention
-# Updated: 6/30/17 
+# Updated: 7/6/17 
 # https://github.com/achafetz/RetentionAnalysis/wiki/Draft-R-Code
 
 
@@ -46,16 +46,17 @@ load(paste0(data, "df_global.RData"))
       geom_point(shape=1) +
       geom_smooth(method=lm, se=FALSE)
   #Ret spending per PLHIV histogram
-    ggplot(df_global_h1, aes(rtnadhr_exp_per_plhiv)) + 
+    p1 <- ggplot(df_global_h1, aes(rtnadhr_exp_per_plhiv)) + 
       geom_histogram() + 
       labs(x = "retention expenditures per PLHIV ($)", y ="frequency") +
       scale_x_continuous(labels = comma) + 
       scale_y_continuous(labels = comma)
   #Log Ret Spending histogram
-    ggplot(df_global_h1, aes(ln_rtnadhr_exp)) + 
+    p2 <- ggplot(df_global_h1, aes(ln_rtnadhr_exp)) + 
       geom_histogram() + 
       labs(x = "log comm. ret/adh. spending", y ="frequency")
-
+    
+    grid.arrange(p1, p2, ncol=2)
     
 ## RETENTION MODELS ##
 
@@ -165,4 +166,4 @@ stargazer(h1a, h1b, h1c, h1d, h1e, type = "html",
   ggplot(df_global_h1, aes(sample = residuals(h1e))) + stat_qq()
         
 #remove values
-  rm(h1a, h1b, h1c, h1d, h1e)
+  rm(df_global_h1, h1a, h1b, h1c, h1d, h1e)

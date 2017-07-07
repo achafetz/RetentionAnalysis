@@ -1,7 +1,7 @@
 # Retention Analysis
 # A.Chafetz, USAID
 # Purpose: analyze community linkage
-# Updated: 6/30/17 
+# Updated: 7/6/17 
 # https://github.com/achafetz/RetentionAnalysis/wiki/Draft-R-Code
 
 
@@ -24,11 +24,17 @@ summary(df_global$cbcts_lnkg_exp)
 # retention histogram
   ggplot(df_global_h2, aes(tx_new)) + 
     geom_histogram() + 
-    labs(title = "New on treatment histogram (PEPFAR FY16)", x = "Patients new treatment", y ="frequency")
-  ggplot(df_global_h2, aes(ln_lnkg_exp)) + 
+    labs(x = "Patients new treatment", y ="frequency")
+  p1 <- ggplot(df_global_h2, aes(cbcts_lnkg_exp)) + 
     geom_histogram() + 
-    labs(title = "Community linkage expenditure histogram (PEPFAR EA FY16)", x= "Log community linkage expenditures", y="frequency")
+    labs(x= "Community linkage expenditures", y="frequency") +
+    scale_x_continuous(labels = comma)
+  p2 <- ggplot(df_global_h2, aes(ln_lnkg_exp)) + 
+    geom_histogram() + 
+    labs(x= "Log community linkage expenditures", y="frequency")
 
+  grid.arrange(p1, p2, ncol=2) #two plotted together
+  
 #models
 h2a <- lm(tx_new ~ ln_lnkg_exp, data=df_global_h2)
 h2b <- lm(tx_new ~ ln_lnkg_exp + plhiv + tx_curr_subnat, data=df_global_h2, na.action = na.exclude)

@@ -2,11 +2,12 @@
 # A.Chafetz, USAID
 # Purpose: initialize packages, folder structure, and global file paths
 # Adapted from T. Essam, USAID
-# Updated: 6/30/17 
+# Updated: 7/6/17 
 # https://github.com/achafetz/RetentionAnalysis/wiki/Draft-R-Code
 
 ## DEPENDENT PACKAGES ##
-  lib <- c("plyr", "tidyverse", "readxl", "readr", "ggplot2", "broom", "knitr", "stargazer", "scales")
+  lib <- c("plyr", "tidyverse", "readxl", "readr", "ggplot2", "broom", "knitr", 
+      "stargazer", "scales", "gridExtra")
   lapply(lib, require, character.only = TRUE)
   
 ## FILE PATHS ##
