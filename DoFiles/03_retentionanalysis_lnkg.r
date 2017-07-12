@@ -18,7 +18,7 @@ summary(df_global$cbcts_lnkg_exp)
 
 #remove districts with no TX_NEW
   print(nrow(filter(df_global,tx_new==0))) #main dataset
-  df_global_h2 <- filter(df_global, tx_new!=0)
+  df_global_h2 <- df_global
 
 #graph
 # retention histogram
@@ -36,11 +36,11 @@ summary(df_global$cbcts_lnkg_exp)
   grid.arrange(p1, p2, ncol=2) #two plotted together
   
 #models
-h2a <- lm(tx_new ~ ln_lnkg_exp, data=df_global_h2)
-h2b <- lm(tx_new ~ ln_lnkg_exp + plhiv + tx_curr_subnat, data=df_global_h2, na.action = na.exclude)
-h2c <- lm(tx_new ~ ln_lnkg_exp + plhiv + tx_curr_subnat + nonscaleup, data=df_global_h2, na.action = na.exclude)
-h2d <- lm(tx_new ~ ln_lnkg_exp + plhiv + tx_curr_subnat + factor(operatingunit), data=df_global_h2, na.action = na.exclude)
-h2e <- lm(tx_new ~ ln_lnkg_exp + plhiv + tx_curr_subnat + nonscaleup + factor(operatingunit), data=df_global_h2, na.action = na.exclude)
+h2a <- lm(proxy_lnkg~ ln_lnkg_exp, data=df_global_h2)
+h2b <- lm(proxy_lnkg ~ ln_lnkg_exp + plhiv + tx_curr_subnat, data=df_global_h2, na.action = na.exclude)
+h2c <- lm(proxy_lnkg ~ ln_lnkg_exp + plhiv + tx_curr_subnat + nonscaleup, data=df_global_h2, na.action = na.exclude)
+h2d <- lm(proxy_lnkg ~ ln_lnkg_exp + plhiv + tx_curr_subnat + factor(operatingunit), data=df_global_h2, na.action = na.exclude)
+h2e <- lm(proxy_lnkg ~ ln_lnkg_exp + plhiv + tx_curr_subnat + nonscaleup + factor(operatingunit), data=df_global_h2, na.action = na.exclude)
 
 #output
 stargazer(h2a, h2b, h2c, h2d, h2e, type = "text")
@@ -79,3 +79,30 @@ ggplot(df_global_h2, aes(tx_new, h2e_resid)) +
 
 
 rm(df_global_h2, h2a, h2b, h2c, h2d, h2e)
+
+#review countries with large community spending
+
+#load global file created
+load(paste0(data, "df_global.RData"))
+
+#select countries
+ctry <- c("Tanzania", "Uganda", "South Africa")
+
+for (k in ctry) {
+  
+  print(k)
+  #filter
+  df_ctry <- df_global %>%
+    filter(operatingunit== k, !is.nan(proxy_lnkg) )  
+  
+  #models
+  h2a <- lm(proxy_lnkg ~ ln_lnkg_exp, data=df_ctry, na.action = na.exclude)
+  h2b <- lm(proxy_lnkg ~ ln_lnkg_exp + plhiv + tx_curr_subnat, data=df_ctry, na.action = na.exclude)
+  h2c <- lm(proxy_lnkg ~ ln_lnkg_exp + plhiv + tx_curr_subnat + nonscaleup, data=df_ctry, na.action = na.exclude)
+  
+  #output
+  stargazer(h2a, h2b, h2c, type = "text")
+  stargazer(h2a, h2b, h2c, type = "html", out = paste0(output, k, "_linkage_output.htm"))
+  
+  rm(df_ctry_h2, h2a, h2b, h2c)
+}

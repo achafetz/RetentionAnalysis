@@ -6,7 +6,7 @@
 # https://github.com/achafetz/RetentionAnalysis/wiki/Draft-R-Code
 
 ## DEPENDENT PACKAGES ##
-  lib <- c("plyr", "tidyverse", "readxl", "readr", "ggplot2", "broom", "knitr", 
+  lib <- c("plyr", "gridExtra", "tidyverse", "readxl", "readr", "ggplot2", "broom", "knitr", 
       "stargazer", "scales", "gridExtra")
   lapply(lib, require, character.only = TRUE)
   

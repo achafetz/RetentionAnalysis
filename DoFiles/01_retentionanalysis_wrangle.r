@@ -1,27 +1,27 @@
 # Retention Analysis
 # A.Chafetz, USAID
 # Purpose: import and wrangle input datasets
-# Updated: 6/30/17 
+# Updated: 7/12/17 
 # https://github.com/achafetz/RetentionAnalysis/wiki/Draft-R-Code
 
 
 # FACT VIEW DATA ##
 
 #import data and call the dataframe factviewdata
-  fvdata <- read_delim(paste0(datafv, "ICPI_FactView_PSNU_20170515_v1_1.txt"), "\t", escape_double = FALSE, trim_ws = TRUE)
+  fvdata <- read_delim(paste0(datafv, "ICPI_FactView_PSNU_20170702_v2_1.txt"), "\t", escape_double = FALSE, trim_ws = TRUE)
 
 # change all header names to lower case to make it easier to use
   names(fvdata) <- tolower(names(fvdata))
 
 # subset fv to only & key indicators
   df_mer <- fvdata %>%
-    filter(indicator %in% c("TX_RET","TX_NEW"), disaggregate %in% c("Total Denominator", "Total Numerator")) %>%
+    filter(indicator %in% c("TX_RET","TX_NEW", "HTS_TST_POS"), disaggregate %in% c("Total Denominator", "Total Numerator")) %>%
     select(operatingunit, countryname, snu1, snu1uid, psnu, psnuuid, fy16snuprioritization, indicator, numeratordenom, fy2016apr)
 
 #aggregate for reshape
   df_mer <- df_mer %>%
     group_by(operatingunit, countryname, snu1, snu1uid, psnu, psnuuid, fy16snuprioritization, indicator, numeratordenom) %>%
-    summarize_each(funs(sum(., na.rm=TRUE)), fy2016apr) %>%
+    summarize_at(vars(fy2016apr), funs(sum(., na.rm=TRUE))) %>%
     ungroup %>%
     
     #reshape by N/D
@@ -32,6 +32,7 @@
     rename(tx_ret_denom = D) %>%
     rename(tx_ret_num = TX_RET) %>%
     rename(tx_new = TX_NEW) %>%
+    rename(hts_pos = HTS_TST_POS) %>%
     
     #adjust psnu/psnuuid to snu1/snu1uid if EA was collected at higher level of the hierarchy & remove prioritization
     mutate(psnu = 
@@ -49,11 +50,14 @@
     
     #aggregate so just one line per psnu
     group_by(operatingunit, countryname, snu1, snu1uid, psnu, psnuuid, fy16snuprioritization) %>%
-    summarize_each(funs(sum(., na.rm=TRUE)), tx_ret_denom, tx_ret_num, tx_new) %>%
+    summarize_at(vars(tx_ret_denom, tx_ret_num, tx_new, hts_pos), funs(sum(., na.rm=TRUE))) %>%
     ungroup %>%
     
     #create a retention variable
     mutate(tx_ret_pct = round(tx_ret_num/tx_ret_denom, 3)) %>%
+    
+    #create a linkage proxy variable
+    mutate(proxy_lnkg = round(tx_new/hts_pos, 3)) %>%
     
     # add STAR v Standard OU designation
     mutate(designation = 
@@ -70,10 +74,10 @@
                     0,1))) %>%
     
     #reorder
-    select(operatingunit:countryname, designation, snu1:fy16snuprioritization, nonscaleup, tx_ret_denom:tx_ret_num, tx_ret_pct, tx_new) %>%
+    select(operatingunit:countryname, designation, psnu:fy16snuprioritization, nonscaleup, tx_ret_denom:tx_ret_num, tx_ret_pct, tx_new, proxy_lnkg) %>%
     
     #remove Burundi column with missing data and no psnuuid
-    subset(!is.na(psnuuid))
+    filter(!is.na(psnuuid))
     
     #assign value labels
     df_mer$designation <- factor(df_mer$designation,
@@ -91,7 +95,7 @@
 ## IMPATT DATA ##
 
 #import Nat/SubNat data
-  impattdata <- read_delim(paste0(datafv,"ICPI_FactView_NAT_SUBNAT_20170515_v1_1.txt"), "\t", escape_double = FALSE, trim_ws = TRUE)
+  impattdata <- read_delim(paste0(datafv,"ICPI_FactView_NAT_SUBNAT_20170702_v2_1.txt"), "\t", escape_double = FALSE, trim_ws = TRUE)
 
 # change all header names to lower case to make it easier to use
   names(impattdata) <- tolower(names(impattdata))
