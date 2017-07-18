@@ -1,7 +1,7 @@
 # Retention Analysis
 # A.Chafetz, USAID
 # Purpose: import and wrangle input datasets
-# Updated: 7/12/17 
+# Updated: 7/17/17 
 # https://github.com/achafetz/RetentionAnalysis/wiki/Draft-R-Code
 
 
@@ -74,7 +74,7 @@
                     0,1))) %>%
     
     #reorder
-    select(operatingunit:countryname, designation, psnu:fy16snuprioritization, nonscaleup, tx_ret_denom:tx_ret_num, tx_ret_pct, tx_new, proxy_lnkg) %>%
+    select(operatingunit:countryname, designation, psnu:fy16snuprioritization, nonscaleup, tx_ret_denom:tx_ret_num, tx_ret_pct, tx_new, hts_pos, proxy_lnkg) %>%
     
     #remove Burundi column with missing data and no psnuuid
     filter(!is.na(psnuuid))

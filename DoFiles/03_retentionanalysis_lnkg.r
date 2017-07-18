@@ -1,7 +1,7 @@
 # Retention Analysis
 # A.Chafetz, USAID
 # Purpose: analyze community linkage
-# Updated: 7/6/17 
+# Updated: 7/17/17 
 # https://github.com/achafetz/RetentionAnalysis/wiki/Draft-R-Code
 
 
@@ -12,6 +12,7 @@ load(paste0(data, "df_global.RData"))
 
 #review DV distribution
 summary(df_global$tx_new)
+summary(df_global$proxy_lnkg)
 
 #review linakge spending distribution
 summary(df_global$cbcts_lnkg_exp)
@@ -36,7 +37,7 @@ summary(df_global$cbcts_lnkg_exp)
   grid.arrange(p1, p2, ncol=2) #two plotted together
   
 #models
-h2a <- lm(proxy_lnkg~ ln_lnkg_exp, data=df_global_h2)
+h2a <- lm(proxy_lnkg ~ ln_lnkg_exp, data=df_global_h2)
 h2b <- lm(proxy_lnkg ~ ln_lnkg_exp + plhiv + tx_curr_subnat, data=df_global_h2, na.action = na.exclude)
 h2c <- lm(proxy_lnkg ~ ln_lnkg_exp + plhiv + tx_curr_subnat + nonscaleup, data=df_global_h2, na.action = na.exclude)
 h2d <- lm(proxy_lnkg ~ ln_lnkg_exp + plhiv + tx_curr_subnat + factor(operatingunit), data=df_global_h2, na.action = na.exclude)
@@ -44,8 +45,9 @@ h2e <- lm(proxy_lnkg ~ ln_lnkg_exp + plhiv + tx_curr_subnat + nonscaleup + facto
 
 #output
 stargazer(h2a, h2b, h2c, h2d, h2e, type = "text")
-stargazer(h2a, h2b, h2c, h2d, h2e, type = "html", out = paste0(output, "linkage_output.htm"))
-
+stargazer(h2a, h2b, h2c, h2d, h2e, type = "html", 
+          covariate.labels=c("Log comm. spending", "PLHIV","Patients on Tx (nat'l)", "Non-scale up district"),
+          out = paste0(output, "linkage_output.htm"))
 
 #plot model
 
@@ -80,29 +82,32 @@ ggplot(df_global_h2, aes(tx_new, h2e_resid)) +
 
 rm(df_global_h2, h2a, h2b, h2c, h2d, h2e)
 
+
 #review countries with large community spending
-
-#load global file created
-load(paste0(data, "df_global.RData"))
-
-#select countries
-ctry <- c("Tanzania", "Uganda", "South Africa")
-
-for (k in ctry) {
   
-  print(k)
+  df_global %>%
+    select(operatingunit, cbcts_lnkg_exp) %>%
+    group_by(operatingunit) %>%
+    summarise_at(vars(cbcts_lnkg_exp), funs(sum(., na.rm = TRUE))) %>%
+    arrange(desc(cbcts_lnkg_exp)) 
+    #kable(format.args = list(big.mark = ","))
+
   #filter
-  df_ctry <- df_global %>%
-    filter(operatingunit== k, !is.nan(proxy_lnkg) )  
+  df_zmb <- df_global %>% filter(operatingunit== "Zambia", !is.nan(proxy_lnkg))
+  df_tnz <- df_global %>% filter(operatingunit== "Tanzania", !is.nan(proxy_lnkg))
+  df_zaf <- df_global %>% filter(operatingunit== "South Africa", !is.nan(proxy_lnkg))
   
   #models
-  h2a <- lm(proxy_lnkg ~ ln_lnkg_exp, data=df_ctry, na.action = na.exclude)
-  h2b <- lm(proxy_lnkg ~ ln_lnkg_exp + plhiv + tx_curr_subnat, data=df_ctry, na.action = na.exclude)
-  h2c <- lm(proxy_lnkg ~ ln_lnkg_exp + plhiv + tx_curr_subnat + nonscaleup, data=df_ctry, na.action = na.exclude)
+  h2_zmb <- lm(proxy_lnkg ~ ln_lnkg_exp + plhiv + tx_curr_subnat + nonscaleup, data=df_zmb, na.action = na.exclude)
+  h2_tnz <- lm(proxy_lnkg ~ ln_lnkg_exp + plhiv + tx_curr_subnat + nonscaleup, data=df_tnz, na.action = na.exclude)
+  h2_zaf <- lm(proxy_lnkg ~ ln_lnkg_exp + plhiv + tx_curr_subnat + nonscaleup, data=df_zaf, na.action = na.exclude)
   
   #output
-  stargazer(h2a, h2b, h2c, type = "text")
-  stargazer(h2a, h2b, h2c, type = "html", out = paste0(output, k, "_linkage_output.htm"))
+  stargazer(h2_zmb, h2_tnz, h2_zaf, type = "text")
+  stargazer(h2_zmb, h2_tnz, h2_zaf, type = "html",
+            column.labels = c("ZMB", "TNZ", "ZAF"),
+            covariate.labels = c("Log comm. spending", "PLHIV","Patients on Tx (nat'l)", "Non-scale up district"),
+            out = paste0(output, "ctry_linkage_output.htm"))
   
   rm(df_ctry_h2, h2a, h2b, h2c)
-}
+
