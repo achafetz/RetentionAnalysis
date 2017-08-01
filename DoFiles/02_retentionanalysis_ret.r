@@ -1,12 +1,12 @@
 # Retention Analysis
 # A.Chafetz, USAID
 # Purpose: analyze community retention
-# Updated: 7/6/17 
+# Updated: 7/24/17 
 # https://github.com/achafetz/RetentionAnalysis/wiki/Draft-R-Code
 
 
 #load global file created
-load(paste0(data, "df_global.RData"))
+load(file.path(data, "df_global.RData"))
 
 ## RETENTION ##
 
@@ -86,7 +86,7 @@ load(paste0(data, "df_global.RData"))
   stargazer(h1a, h1a2, h1a3, h1f, h1f2, h1f3, type = "html", 
             dep.var.labels=c("treatment retention (%)"),
             covariate.labels=c("Community retention spending", "Comm. spending per PLHIV", "Log comm. spending"),
-            out= paste0(output,"ret_out_comp.htm"))
+            out= file.path(output,"ret_out_comp.htm"))
   
   #remove stored values
     rm(h1a, h1a2, h1a3, h1f, h1f2, h1f3)
@@ -133,7 +133,7 @@ stargazer(h1a, h1b, h1c, h1d, h1e, type = "text")
 stargazer(h1a, h1b, h1c, h1d, h1e, type = "html", 
   dep.var.labels=c("treatment retention (%)"),
   covariate.labels=c("Comm. spending per PLHIV", "PLHIV","Patients on Tx (nat'l)", "Non-scale up district"),
-  out=paste0(output, "ret_out.htm"))
+  out=file.path(output, "ret_out.htm"))
 
 
 #plot model

@@ -1,12 +1,12 @@
 # Retention Analysis
 # A.Chafetz, USAID
 # Purpose: analyze community linkage
-# Updated: 7/17/17 
+# Updated: 7/24/17 
 # https://github.com/achafetz/RetentionAnalysis/wiki/Draft-R-Code
 
 
 #load global file created
-load(paste0(data, "df_global.RData"))
+load(file.path(data, "df_global.RData"))
 
 ## LINKAGE MODELS ##
 
@@ -47,7 +47,7 @@ h2e <- lm(proxy_lnkg ~ ln_lnkg_exp + plhiv + tx_curr_subnat + nonscaleup + facto
 stargazer(h2a, h2b, h2c, h2d, h2e, type = "text")
 stargazer(h2a, h2b, h2c, h2d, h2e, type = "html", 
           covariate.labels=c("Log comm. spending", "PLHIV","Patients on Tx (nat'l)", "Non-scale up district"),
-          out = paste0(output, "linkage_output.htm"))
+          out = file.path(output, "linkage_output.htm"))
 
 #plot model
 
@@ -107,7 +107,7 @@ rm(df_global_h2, h2a, h2b, h2c, h2d, h2e)
   stargazer(h2_zmb, h2_tnz, h2_zaf, type = "html",
             column.labels = c("ZMB", "TNZ", "ZAF"),
             covariate.labels = c("Log comm. spending", "PLHIV","Patients on Tx (nat'l)", "Non-scale up district"),
-            out = paste0(output, "ctry_linkage_output.htm"))
+            out = file.path(output, "ctry_linkage_output.htm"))
   
   rm(df_ctry_h2, h2a, h2b, h2c)
 

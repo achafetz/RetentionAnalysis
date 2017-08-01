@@ -1,14 +1,14 @@
 # Retention Analysis
 # A.Chafetz, USAID
 # Purpose: import and wrangle input datasets
-# Updated: 7/17/17 
+# Updated: 7/24/17 
 # https://github.com/achafetz/RetentionAnalysis/wiki/Draft-R-Code
 
 
 # FACT VIEW DATA ##
 
 #import data and call the dataframe factviewdata
-  fvdata <- read_delim(paste0(datafv, "ICPI_FactView_PSNU_20170702_v2_1.txt"), "\t", escape_double = FALSE, trim_ws = TRUE)
+  fvdata <- read_delim(file.path(datafv, "ICPI_FactView_PSNU_20170702_v2_1.txt"), "\t", escape_double = FALSE, trim_ws = TRUE)
 
 # change all header names to lower case to make it easier to use
   names(fvdata) <- tolower(names(fvdata))
@@ -95,7 +95,7 @@
 ## IMPATT DATA ##
 
 #import Nat/SubNat data
-  impattdata <- read_delim(paste0(datafv,"ICPI_FactView_NAT_SUBNAT_20170702_v2_1.txt"), "\t", escape_double = FALSE, trim_ws = TRUE)
+  impattdata <- read_delim(file.path(datafv,"ICPI_FactView_NAT_SUBNAT_20170702_v2_1.txt"), "\t", escape_double = FALSE, trim_ws = TRUE)
 
 # change all header names to lower case to make it easier to use
   names(impattdata) <- tolower(names(impattdata))
@@ -129,7 +129,7 @@
 ## EA DATA NAV DATA ##
 
 #import EA data from Botswana data nav tool
-  df_ea <- read_csv(paste0(data,"2014-2016 allcntry SAS Output 24JAN17.csv"))
+  df_ea <- read_csv(file.path(data,"2014-2016 allcntry SAS Output 24JAN17.csv"))
 
 # change all header names to lower case to make it easier to use
   names(df_ea) <- tolower(names(df_ea))
@@ -164,9 +164,9 @@
   is.na(df_global) <- sapply(df_global, is.infinite)
 
 #save output
-  save(df_global, file = paste0(data, "df_global.RData"))
+  save(df_global, file = file.path(data, "df_global.RData"))
 
 ## EXPORT DATA ###
-#write.csv(df_global, paste0(output, "C:/Users/achafetz/Documents/GitHub/RetentionAnalysis/Data/ret_global.csv"), na="")
+#write.csv(df_global, file.path(output, "C:/Users/achafetz/Documents/GitHub/RetentionAnalysis/Data/ret_global.csv"), na="")
 
 
